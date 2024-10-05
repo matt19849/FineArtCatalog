@@ -1,14 +1,8 @@
-//
-//  FineArtCatalogApp.swift
-//  FineArtCatalog
-//
-//  Created by Matt Cooper on 5/10/2024.
-//
-
 import SwiftUI
 
 @main
 struct FineArtCatalogApp: App {
+    // Initialize the PersistenceController
     let persistenceController = PersistenceController.shared
 
     var body: some Scene {
@@ -18,3 +12,5 @@ struct FineArtCatalogApp: App {
         }
     }
 }
+
+

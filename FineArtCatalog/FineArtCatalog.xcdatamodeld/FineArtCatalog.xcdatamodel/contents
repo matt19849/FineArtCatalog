@@ -1,9 +1,40 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
-    <entity name="Item" representedClassName="Item" syncable="YES" codeGenerationType="class">
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23231" systemVersion="24A5289g" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="Artwork" representedClassName="Artwork" parentEntity="Object" syncable="YES" codeGenerationType="class">
+        <attribute name="artistName" optional="YES" attributeType="String"/>
+        <attribute name="medium" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
     </entity>
-    <elements>
-        <element name="Item" positionX="-63" positionY="-18" width="128" height="44"/>
-    </elements>
+    <entity name="Carton" representedClassName="Carton" parentEntity="Object" syncable="YES" codeGenerationType="class">
+        <attribute name="contents" optional="YES" attributeType="String"/>
+        <attribute name="dimensions" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="Collection" representedClassName="Collection" syncable="YES" codeGenerationType="class">
+        <attribute name="clientName" attributeType="String"/>
+        <attribute name="removalNumber" attributeType="String"/>
+        <attribute name="timestamp" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="objects" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Object" inverseName="collection" inverseEntity="Object"/>
+    </entity>
+    <entity name="Crate" representedClassName="Crate" parentEntity="Object" syncable="YES" codeGenerationType="class">
+        <attribute name="contents" optional="YES" attributeType="String"/>
+        <attribute name="dimensions" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="Furniture" representedClassName="Furniture" parentEntity="Object" syncable="YES" codeGenerationType="class">
+        <attribute name="furnitureDesc" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="Medium" representedClassName="Medium" syncable="YES" codeGenerationType="class">
+        <attribute name="name" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="Object" representedClassName="Object" syncable="YES" codeGenerationType="class">
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="object" optional="YES" attributeType="String"/>
+        <attribute name="photo" optional="YES" attributeType="Binary"/>
+        <attribute name="storageLocation" optional="YES" attributeType="String"/>
+        <attribute name="storageType" optional="YES" attributeType="String"/>
+        <relationship name="collection" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Collection" inverseName="objects" inverseEntity="Collection"/>
+    </entity>
+    <entity name="Package" representedClassName="Package" parentEntity="Object" syncable="YES" codeGenerationType="class">
+        <attribute name="contents" optional="YES" attributeType="String"/>
+        <attribute name="dimensions" optional="YES" attributeType="String"/>
+    </entity>
 </model>

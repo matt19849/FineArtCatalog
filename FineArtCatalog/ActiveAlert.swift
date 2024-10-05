@@ -1,8 +1,15 @@
-//
-//  ActiveAlert.swift
-//  FineArtCatalog
-//
-//  Created by Matt Cooper on 5/10/2024.
-//
-
 import Foundation
+
+enum ActiveAlert: Identifiable {
+    case success
+    case error(String)
+    
+    var id: String {
+        switch self {
+        case .success:
+            return "success"
+        case .error(let message):
+            return message
+        }
+    }
+}
