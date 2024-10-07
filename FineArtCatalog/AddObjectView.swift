@@ -10,7 +10,8 @@ struct AddObjectView: View {
     // State for multiple photos
     @State private var selectedImages: [UIImage] = []
     @State private var showImagePicker: Bool = false
-    @State private var imageSource: UIImagePickerController.SourceType = .photoLibrary
+    @State private var showCameraPicker: Bool = false
+    @State private var activeAlert: ActiveAlert?
     @State private var showActionSheet: Bool = false
 
     // States for various object types
@@ -27,13 +28,15 @@ struct AddObjectView: View {
     @State private var storageLocation: String = ""
     @State private var artworkMedium: String = "Painting"
     @State private var date: Date = Date()
-    @State private var activeAlert: ActiveAlert?
 
     // Object type selection
     @State private var selectedObjectType: String = "Artwork"
     let objectTypes = ["Artwork", "Furniture", "Crate", "Carton", "Package"]
     let storageTypes = ["Climate", "Not Climate"]
     let artworkMediums = ["Painting", "Sculpture"]
+
+    // Binding for captured image
+    @State private var capturedImage: UIImage? = nil
 
     var body: some View {
         ScrollView {
@@ -95,6 +98,39 @@ struct AddObjectView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+        }
+        .actionSheet(isPresented: $showActionSheet) {
+            ActionSheet(title: Text("Add Photo"), message: Text("Choose a photo source"), buttons: [
+                .default(Text("Photo Library")) {
+                    showImagePicker = true
+                },
+                .default(Text("Camera")) {
+                    // Check if camera is available
+                    if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                        showCameraPicker = true
+                    } else {
+                        activeAlert = .error("Camera is not available on this device.")
+                    }
+                },
+                .cancel()
+            ])
+        }
+        // Sheet for Photo Library Picker
+        .sheet(isPresented: $showImagePicker) {
+            ImagePicker(selectedImages: $selectedImages)
+                .onDisappear {
+                    // Handle any additional actions after picking images
+                }
+        }
+        // Sheet for Camera Picker
+        .sheet(isPresented: $showCameraPicker) {
+            CameraPicker(capturedImage: $capturedImage)
+                .onDisappear {
+                    if let image = capturedImage {
+                        addImage(image)
+                        capturedImage = nil // Reset capturedImage to prevent duplication
+                    }
+                }
         }
     }
 
@@ -247,26 +283,29 @@ struct AddObjectView: View {
 
             Button(action: {
                 if selectedImages.count < 5 {
-                    showImagePicker = true
+                    showActionSheet = true
                 } else {
                     activeAlert = .error("You can only select up to 5 photos.")
                 }
             }) {
-                Text(selectedImages.isEmpty ? "Select Photos" : "Add More Photos")
+                Text(selectedImages.isEmpty ? "Add Photos" : "Add More Photos")
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
                     .background(Color.blue)
                     .cornerRadius(5)
             }
-            .sheet(isPresented: $showImagePicker) {
-                ImagePicker(selectedImages: $selectedImages)
-            }
-
         }
     }
     
-    // Replace all instances of 'Object' with 'CatalogObject'
+    // Function to add a captured image to the selectedImages array
+    private func addImage(_ image: UIImage) {
+        if selectedImages.count < 5 {
+            selectedImages.append(image)
+        } else {
+            activeAlert = .error("You can only select up to 5 photos.")
+        }
+    }
 
     private func saveObject() {
         guard let collection = collection else {
@@ -399,7 +438,6 @@ struct AddObjectView: View {
             activeAlert = .error("Failed to save object: \(error.localizedDescription)")
         }
     }
-
 
     // Function to resize images before saving them to file system
     func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
