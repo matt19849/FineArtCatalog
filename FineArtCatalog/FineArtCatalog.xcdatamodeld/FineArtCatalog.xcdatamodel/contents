@@ -27,11 +27,15 @@
     </entity>
     <entity name="Object" representedClassName="Object" syncable="YES" codeGenerationType="class">
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="object" optional="YES" attributeType="String"/>
-        <attribute name="photo" optional="YES" attributeType="Binary"/>
+        <attribute name="objectType" attributeType="String"/>
         <attribute name="storageLocation" optional="YES" attributeType="String"/>
         <attribute name="storageType" optional="YES" attributeType="String"/>
         <relationship name="collection" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Collection" inverseName="objects" inverseEntity="Collection"/>
+        <relationship name="photos" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ObjectPhoto" inverseName="object" inverseEntity="ObjectPhoto"/>
+    </entity>
+    <entity name="ObjectPhoto" representedClassName="ObjectPhoto" syncable="YES" codeGenerationType="class">
+        <attribute name="data" optional="YES" attributeType="Binary"/>
+        <relationship name="object" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Object" inverseName="photos" inverseEntity="Object"/>
     </entity>
     <entity name="Package" representedClassName="Package" parentEntity="Object" syncable="YES" codeGenerationType="class">
         <attribute name="contents" optional="YES" attributeType="String"/>

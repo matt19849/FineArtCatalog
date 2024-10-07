@@ -1,8 +1,6 @@
 import SwiftUI
 import CoreData
 
-
-
 struct CollectionDetailView: View {
     // Access the managed object context
     @Environment(\.managedObjectContext) private var viewContext
@@ -13,7 +11,7 @@ struct CollectionDetailView: View {
     var collection: Collection
 
     // FetchRequest to retrieve objects associated with the collection
-    @FetchRequest var objects: FetchedResults<Object>
+    @FetchRequest var objects: FetchedResults<CatalogObject> // Updated Class
 
     // State to control the presentation of AddObjectView
     @State private var showAddObjectView: Bool = false
@@ -24,14 +22,12 @@ struct CollectionDetailView: View {
     // Initializer to set up the FetchRequest with a predicate
     init(collection: Collection) {
         self.collection = collection
-        let fetchRequest = NSFetchRequest<Object>(entityName: "Object") // <-- Ensure "Object" matches the entity name in your Core Data model
-        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Object.date, ascending: true)]
-        fetchRequest.predicate = NSPredicate(format: "collection == %@", collection.objectID)
-        
+        let fetchRequest = NSFetchRequest<CatalogObject>(entityName: "CatalogObject") // Updated Entity Name
+        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \CatalogObject.date, ascending: true)]
+        fetchRequest.predicate = NSPredicate(format: "collection == %@", collection) // Use collection object directly
+
         _objects = FetchRequest(fetchRequest: fetchRequest, animation: .default)
     }
-
-
 
     var body: some View {
         VStack {
@@ -86,7 +82,6 @@ struct CollectionDetailView: View {
         .sheet(isPresented: $showAddObjectView) {
             AddObjectView(collection: collection)
                 .environment(\.managedObjectContext, viewContext)
-            // Removed .environmentObject(authViewModel)
         }
         // Single Alert Modifier
         .alert(item: $activeAlert) { alert in
@@ -112,7 +107,18 @@ struct CollectionDetailView: View {
     // Function to delete objects from the collection
     private func deleteObjects(offsets: IndexSet) {
         withAnimation {
-            offsets.map { objects[$0] }.forEach(viewContext.delete)
+            offsets.map { objects[$0] }.forEach { object in
+                // Delete associated photos from file system
+                if let photos = object.photos as? Set<ObjectPhoto> {
+                    for photo in photos {
+                        if let photoPath = photo.photoPath {
+                            FileManagerHelper.shared.deleteImage(named: photoPath)
+                        }
+                        viewContext.delete(photo)
+                    }
+                }
+                viewContext.delete(object)
+            }
 
             do {
                 try viewContext.save()
@@ -138,11 +144,12 @@ struct CollectionDetailView: View {
 
 // Subview to display individual objects
 struct ObjectRowView: View {
-    var object: Object
+    var object: CatalogObject // Updated Class
 
     var body: some View {
         HStack {
-            if let imageData = object.photo, let uiImage = UIImage(data: imageData) {
+            // Handle the object photos
+            if let photos = object.photos as? Set<ObjectPhoto>, let firstPhoto = photos.first, let photoPath = firstPhoto.photoPath, let uiImage = FileManagerHelper.shared.loadImage(named: photoPath) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
@@ -159,23 +166,33 @@ struct ObjectRowView: View {
                     .foregroundColor(.gray)
             }
 
+            // Safely cast to Artwork to access title and artistName
             VStack(alignment: .leading, spacing: 5) {
-                Text(getTitle())
-                    .font(.headline)
-                Text(getSubtitle())
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                if let artwork = object as? Artwork {
+                    Text(artwork.title ?? "Unknown Title")
+                        .font(.headline)
+                    Text(artwork.artistName ?? "Unknown Artist")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                } else {
+                    Text(getTitle())
+                        .font(.headline)
+                    Text(getSubtitle())
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
             }
 
             Spacer()
 
+            // Display the object type
             Text(getType())
                 .font(.subheadline)
                 .foregroundColor(.blue)
         }
         .padding(.vertical, 5)
     }
-
+    
     // Helper functions to retrieve specific attributes based on the object type
     private func getTitle() -> String {
         if let artwork = object as? Artwork {
@@ -208,7 +225,18 @@ struct ObjectRowView: View {
     }
 
     private func getType() -> String {
-        return object.object ?? "Unknown Type" // Consider renaming 'object' to 'objectType' in Core Data
+        if let _ = object as? Artwork {
+            return "Artwork"
+        } else if let _ = object as? Carton {
+            return "Carton"
+        } else if let _ = object as? Crate {
+            return "Crate"
+        } else if let _ = object as? Furniture {
+            return "Furniture"
+        } else if let _ = object as? Package {
+            return "Package"
+        }
+        return "Unknown Type"
     }
 }
 
